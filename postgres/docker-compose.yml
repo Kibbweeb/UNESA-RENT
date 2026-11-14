@@ -1,0 +1,23 @@
+name: unesarent
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: unesarent_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-unesarent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-unesarent_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-unesarent}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-unesarent} -d ${POSTGRES_DB:-unesarent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  postgres_data:
