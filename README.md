@@ -1,104 +1,206 @@
+<div align="center">
+
 # UNESARENT
 
-Root proyek dengan:
+Starter monorepo autentikasi fullstack dengan React, Go, JWT, dan PostgreSQL.
 
-- **Frontend**: React 19 + Vite (JavaScript)
-- **Backend**: Go (standard library `net/http`)
-- **Auth**: register + login + endpoint `me` menggunakan **JWT (HS256)** dan password **bcrypt**
-- **Database**: PostgreSQL disiapkan di `postgres/` (belum terhubung ke backend)
+[![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![JWT](https://img.shields.io/badge/Auth-JWT%20%2B%20bcrypt-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 
-Tampilan sengaja dibuat minimal. Kamu tinggal membuat halaman login/register sendiri,
-semua logikanya sudah tersedia lewat `useAuth()`.
+[Fitur](#fitur) · [Arsitektur](#arsitektur) · [Quick Start](#quick-start) · [API](#api-reference) · [Dokumentasi](#dokumentasi)
+
+</div>
 
 ---
 
-## Struktur
+## Tentang Proyek
 
+UNESARENT adalah fondasi aplikasi fullstack yang berfokus pada autentikasi. Backend Go
+menyediakan register, login, dan endpoint profil dengan access token JWT. Frontend React
+sudah memiliki seluruh state autentikasi, pemanggilan API, penyimpanan token, dan guard
+halaman — tampilan sengaja dibuat minimal agar bebas dikustomisasi.
+
+Setup PostgreSQL juga sudah disiapkan di direktori [`postgres/`](postgres/README.md),
+tetapi **belum terhubung** ke backend. Backend saat ini menggunakan penyimpanan JSON
+untuk development.
+
+> **Status proyek:** logika autentikasi siap dipakai. Halaman UI di `frontend/src/App.jsx`
+> masih berupa placeholder.
+
+---
+
+## Fitur
+
+### Autentikasi
+
+- Register dengan validasi nama, email, dan password
+- Login dengan verifikasi password bcrypt
+- Access token JWT HS256 dengan masa berlaku yang dapat dikonfigurasi
+- Endpoint `GET /api/auth/me` untuk mengambil user yang sedang login
+- Register otomatis login
+- Pemulihan sesi setelah refresh halaman
+- Logout client-side
+- Pesan error generik untuk mencegah user enumeration
+- Error validasi per field untuk kebutuhan form
+
+### Backend
+
+- Go standard library `net/http` tanpa framework router tambahan
+- Middleware CORS, logging, recovery, dan autentikasi Bearer token
+- Graceful shutdown
+- Request body limit 1 MB
+- Penyimpanan user JSON yang aman untuk development
+- Penulisan file atomik dan permission `0600`
+
+### Frontend
+
+- `AuthProvider` dan hook `useAuth()`
+- `RequireAuth` untuk memproteksi halaman
+- Fetch wrapper dengan `ApiError` terstruktur
+- Penyimpanan token di `localStorage`
+- Proxy Vite untuk menghindari CORS saat development
+- Build produksi dengan Vite
+
+### Infrastruktur
+
+- PostgreSQL 17 + Docker Compose
+- Schema awal, unique index email case-insensitive, dan trigger `updated_at`
+- Contoh environment untuk backend, frontend, dan database
+- Makefile untuk menjalankan seluruh stack
+
+---
+
+## Arsitektur
+
+```mermaid
+flowchart LR
+    A[React SPA] -->|JSON + Bearer JWT| B[Go API]
+    B --> C[(users.json)]
+    B -. belum terhubung .-> D[(PostgreSQL)]
 ```
-.
+
+Alur autentikasi:
+
+1. Frontend mengirim kredensial ke `/api/auth/register` atau `/api/auth/login`.
+2. Backend memvalidasi input, memproses password dengan bcrypt, lalu menerbitkan JWT.
+3. `AuthProvider` menyimpan token dan data user.
+4. Setiap request terproteksi mengirim header `Authorization: Bearer <token>`.
+5. Middleware memverifikasi signature, issuer, dan masa berlaku token.
+6. Endpoint `/api/auth/me` mengembalikan data user terbaru.
+
+---
+
+## Tech Stack
+
+| Layer     | Teknologi                          |
+| --------- | ---------------------------------- |
+| Frontend  | React 19, Vite 7, JavaScript        |
+| Backend   | Go 1.26+, `net/http`, `log/slog`   |
+| Auth      | JWT HS256, bcrypt                  |
+| Database  | PostgreSQL 17 (belum terhubung)    |
+| Tooling   | Make, Docker Compose, npm          |
+
+---
+
+## Struktur Proyek
+
+```text
+UNESARENT/
 ├── backend/
-│   ├── cmd/server/main.go
+│   ├── cmd/server/
 │   ├── internal/
 │   │   ├── auth/
-│   │   │   ├── jwt.go
-│   │   │   └── password.go
 │   │   ├── config/
 │   │   ├── httpapi/
 │   │   └── user/
 │   ├── .env.example
-│   └── go.mod
+│   ├── go.mod
+│   └── README.md
 ├── frontend/
 │   ├── src/
 │   │   ├── auth/
-│   │   │   ├── AuthContext.jsx
-│   │   │   ├── useAuth.js
-│   │   │   ├── RequireAuth.jsx
-│   │   │   └── tokenStorage.js
 │   │   ├── lib/
-│   │   │   ├── http.js
-│   │   │   └── authApi.js
 │   │   ├── App.jsx
 │   │   └── main.jsx
-│   └── vite.config.js
+│   ├── .env.example
+│   ├── vite.config.js
+│   └── README.md
 ├── postgres/
+│   ├── initdb/
 │   ├── docker-compose.yml
 │   ├── .env.example
-│   ├── README.md
-│   └── initdb/001_schema.sql
+│   └── README.md
 ├── Makefile
 └── README.md
 ```
 
+Dokumentasi lebih detail tersedia di [backend/README.md](backend/README.md),
+[frontend/README.md](frontend/README.md), dan [postgres/README.md](postgres/README.md).
+
 ---
 
-## Menjalankan
+## Quick Start
 
-Prasyarat: Go 1.26+, Node.js 20.19+ (atau 22.12+), dan Docker (opsional, untuk PostgreSQL).
+### Prasyarat
 
-### 1. Backend
+| Kebutuhan | Versi                                  |
+| --------- | -------------------------------------- |
+| Go        | 1.26+                                  |
+| Node.js   | 20.19+ atau 22.12+                     |
+| npm       | 10+                                    |
+| Docker    | Opsional, untuk PostgreSQL             |
+| Make      | Opsional, mempermudah perintah umum    |
 
-```bash
-cd backend
-cp .env.example .env
-go run ./cmd/server
-```
-
-Ganti `JWT_SECRET` di `.env` dengan nilai acak minimal 32 karakter.
-
-Server berjalan di `http://localhost:8080`. Cek dengan:
+### Instalasi
 
 ```bash
-curl http://localhost:8080/api/health
-```
-
-Response: `{"status":"ok"}`
-
-### 2. Frontend
-
-Di terminal lain:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Buka `http://localhost:5173`.
-
-### Jalankan keduanya sekaligus
-
-```bash
+git clone <repository-url>
+cd UNESARENT
 make install
+```
+
+Jika tidak memakai Make:
+
+```bash
+cd backend && go mod download
+cd ../frontend && npm install
+```
+
+### Konfigurasi backend
+
+```bash
+cp backend/.env.example backend/.env
+openssl rand -base64 48
+```
+
+Salin hasil perintah `openssl` ke nilai `JWT_SECRET` di `backend/.env`.
+
+### Menjalankan aplikasi
+
+```bash
 make dev
 ```
 
----
+Perintah tersebut menjalankan backend dan frontend sekaligus. Alternatif dua terminal:
 
-## PostgreSQL (belum terhubung)
+```bash
+make backend
+```
 
-Setup PostgreSQL ada di folder `postgres/`, berisi Docker Compose, schema awal `users`,
-dan contoh environment. Backend saat ini **masih memakai penyimpanan JSON**, jadi database
-ini belum dipakai aplikasi.
+```bash
+make frontend
+```
+
+| Service  | URL                     |
+| -------- | ----------------------- |
+| Frontend | `http://localhost:5173` |
+| Backend  | `http://localhost:8080` |
+| Health   | `http://localhost:8080/api/health` |
+
+### PostgreSQL opsional
 
 ```bash
 cd postgres
@@ -106,41 +208,97 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Atau dari root proyek:
+Atau dari root:
 
 ```bash
 make db-up
-make db-down
-make db-reset
 ```
 
-Schema dijalankan otomatis saat container pertama kali dibuat. Detail koneksi, skema,
-dan cara menjalankan tanpa Docker ada di `postgres/README.md`.
+Backend belum membaca database ini. Lihat [postgres/README.md](postgres/README.md) untuk
+detail schema dan rencana integrasi.
 
 ---
 
-## Endpoint API
+## Konfigurasi
 
-| Method | Path                 | Auth   | Deskripsi                          |
-| ------ | -------------------- | ------ | ---------------------------------- |
-| GET    | `/api/health`        | -      | Health check                       |
-| POST   | `/api/auth/register` | -      | Daftar user, langsung dapat token  |
-| POST   | `/api/auth/login`    | -      | Login, dapat token                 |
-| GET    | `/api/auth/me`       | Bearer | Data user yang sedang login        |
+### Backend
+
+File: `backend/.env`
+
+| Variable       | Default                     | Deskripsi                                  |
+| -------------- | --------------------------- | ------------------------------------------ |
+| `APP_ADDR`     | `:8080`                     | Alamat listen HTTP server                  |
+| `JWT_SECRET`   | secret development          | Secret JWT, minimal 32 karakter            |
+| `JWT_TTL`      | `24h`                       | Masa berlaku access token                  |
+| `CORS_ORIGINS` | `http://localhost:5173,...` | Origin frontend yang diizinkan             |
+| `STORE_PATH`   | `data/users.json`           | Lokasi penyimpanan user                    |
+
+`JWT_SECRET` wajib diganti sebelum deploy. Jika kosong, backend memakai secret
+development dan menampilkan peringatan saat startup.
+
+### Frontend
+
+File: `frontend/.env`
+
+| Variable       | Default | Deskripsi                                      |
+| -------------- | ------- | ---------------------------------------------- |
+| `VITE_API_URL` | kosong  | Base URL API jika tidak memakai proxy Vite     |
+
+Saat development biarkan kosong. Vite meneruskan `/api` ke `http://localhost:8080`.
+
+### PostgreSQL
+
+File: `postgres/.env`
+
+| Variable          | Default       | Deskripsi                    |
+| ----------------- | ------------- | ---------------------------- |
+| `POSTGRES_USER`   | `unesarent`   | Username database            |
+| `POSTGRES_PASSWORD` | `unesarent_dev` | Password database         |
+| `POSTGRES_DB`     | `unesarent`   | Nama database                |
+| `POSTGRES_PORT`   | `5432`        | Port host                    |
+| `DATABASE_URL`    | -             | DSN untuk integrasi backend  |
+
+---
+
+## API Reference
+
+Base URL development: `http://localhost:8080`
+
+Endpoint terproteksi membutuhkan header:
+
+```http
+Authorization: Bearer <token>
+```
+
+### Ringkasan endpoint
+
+| Method | Endpoint             | Auth   | Status sukses | Deskripsi                    |
+| ------ | -------------------- | ------ | ------------- | ---------------------------- |
+| GET    | `/api/health`        | Tidak  | `200`         | Health check                 |
+| POST   | `/api/auth/register` | Tidak  | `201`         | Registrasi user              |
+| POST   | `/api/auth/login`    | Tidak  | `200`         | Login user                   |
+| GET    | `/api/auth/me`       | Ya     | `200`         | Data user yang sedang login  |
 
 ### Register
 
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"Budi Santoso","email":"budi@example.com","password":"rahasia123"}'
+```http
+POST /api/auth/register
+Content-Type: application/json
 ```
-
-`201 Created`
 
 ```json
 {
-  "token": "eyJhbGciOi...",
+  "name": "Budi Santoso",
+  "email": "budi@example.com",
+  "password": "rahasia123"
+}
+```
+
+Response `201 Created`:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
   "token_type": "Bearer",
   "expires_at": "2026-11-15T11:57:02+07:00",
   "user": {
@@ -152,21 +310,35 @@ curl -X POST http://localhost:8080/api/auth/register \
 }
 ```
 
+Aturan input:
+
+| Field      | Aturan                                  |
+| ---------- | --------------------------------------- |
+| `name`     | 2–80 karakter                           |
+| `email`    | Format email valid, maksimal 254 karakter |
+| `password` | 8–72 byte                               |
+
 ### Login
 
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"budi@example.com","password":"rahasia123"}'
+```http
+POST /api/auth/login
+Content-Type: application/json
 ```
 
-`200 OK` dengan bentuk response yang sama seperti register.
+```json
+{
+  "email": "budi@example.com",
+  "password": "rahasia123"
+}
+```
+
+Response `200 OK` memiliki bentuk yang sama dengan register.
 
 ### Me
 
-```bash
-curl http://localhost:8080/api/auth/me \
-  -H 'Authorization: Bearer <token>'
+```http
+GET /api/auth/me
+Authorization: Bearer <token>
 ```
 
 ```json
@@ -195,18 +367,46 @@ curl http://localhost:8080/api/auth/me \
 }
 ```
 
-Kode error yang mungkin: `validation_error` (422), `email_taken` (409),
-`invalid_credentials` (401), `missing_token` / `invalid_token` / `token_expired` (401),
-`invalid_body` (400), `internal_error` (500).
+| Code                  | HTTP | Deskripsi                              |
+| --------------------- | ---- | -------------------------------------- |
+| `validation_error`    | 422  | Input tidak valid, lihat `fields`      |
+| `email_taken`         | 409  | Email sudah terdaftar                  |
+| `invalid_credentials` | 401  | Email atau password salah              |
+| `missing_token`       | 401  | Header Authorization tidak ada         |
+| `invalid_token`       | 401  | Token tidak valid                      |
+| `token_expired`       | 401  | Token sudah kedaluwarsa                |
+| `user_not_found`      | 401  | User dari token tidak ditemukan        |
+| `invalid_body`        | 400  | Body bukan JSON yang valid             |
+| `internal_error`      | 500  | Kesalahan internal server              |
 
-> Catatan: body register/login memakai `DisallowUnknownFields`, jadi kirim hanya field
-> yang terdaftar (`name`, `email`, `password`). Jangan kirim `confirmPassword` ke API.
+Body register dan login memakai `DisallowUnknownFields`. Kirim hanya field yang
+terdaftar dan jangan menyertakan field tambahan seperti `confirmPassword`.
 
 ---
 
-## Menghubungkan ke tampilan
+## Integrasi Frontend
 
-### Login
+Seluruh state autentikasi tersedia melalui `useAuth()`.
+
+```jsx
+import { useAuth } from './auth/useAuth'
+
+const { user, status, error, pending, login, register, logout } = useAuth()
+```
+
+| Properti          | Tipe                        | Deskripsi                              |
+| ----------------- | --------------------------- | -------------------------------------- |
+| `user`            | `object \| null`            | User yang sedang login                 |
+| `status`          | `string`                    | `loading`, `anonymous`, `authenticated` |
+| `error`           | `ApiError \| null`          | Error terakhir                         |
+| `pending`         | `boolean`                   | Proses login/register berjalan         |
+| `isAuthenticated` | `boolean`                   | Status autentikasi                     |
+| `login`           | `function`                  | `login({ email, password })`           |
+| `register`        | `function`                  | `register({ name, email, password })`  |
+| `logout`          | `function`                  | Menghapus sesi client-side             |
+| `clearError`      | `function`                  | Menghapus error terakhir               |
+
+Contoh halaman login:
 
 ```jsx
 import { useState } from 'react'
@@ -216,8 +416,8 @@ export default function LoginPage() {
   const { login, pending, error } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleSubmit(event) {
+    event.preventDefault()
     try {
       await login(form)
     } catch (err) {
@@ -230,15 +430,13 @@ export default function LoginPage() {
       <input
         type="email"
         value={form.email}
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
-        placeholder="Email"
+        onChange={(event) => setForm({ ...form, email: event.target.value })}
         required
       />
       <input
         type="password"
         value={form.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
-        placeholder="Password"
+        onChange={(event) => setForm({ ...form, password: event.target.value })}
         required
       />
       {error && <p>{error.message}</p>}
@@ -250,25 +448,7 @@ export default function LoginPage() {
 }
 ```
 
-### Register
-
-```jsx
-const { register, pending, error } = useAuth()
-
-await register({ name: 'Budi', email: 'budi@example.com', password: 'rahasia123' })
-```
-
-Register otomatis login (token langsung disimpan oleh context).
-
-### Cek status & logout
-
-```jsx
-const { status, user, isAuthenticated, logout } = useAuth()
-```
-
-Nilai `status`: `loading`, `anonymous`, atau `authenticated`.
-
-### Guard halaman
+Guard halaman:
 
 ```jsx
 import { RequireAuth } from './auth/RequireAuth'
@@ -278,52 +458,62 @@ import { RequireAuth } from './auth/RequireAuth'
 </RequireAuth>
 ```
 
-Kalau memakai `react-router-dom`:
-
-```jsx
-if (status === 'loading') return <p>Memuat...</p>
-if (!isAuthenticated) return <Navigate to="/login" replace />
-```
-
-### Request ke endpoint lain
+Request ke endpoint lain:
 
 ```js
 import { request } from './lib/http'
 
-const data = await request('/api/sesuatu')
+const data = await request('/api/endpoint')
 ```
 
-`request` otomatis menambahkan `Authorization: Bearer <token>` dan melempar `ApiError`
-dengan properti `status`, `code`, dan `fields`.
-Kalau backend membalas 401 karena token kedaluwarsa, panggil `logout()`.
+`request` otomatis menambahkan Bearer token dan melempar `ApiError` dengan properti
+`status`, `code`, dan `fields`.
 
 ---
 
-## Environment variable backend
+## Perintah
 
-| Variable       | Default                  | Keterangan                              |
-| -------------- | ------------------------ | --------------------------------------- |
-| `APP_ADDR`     | `:8080`                  | Alamat listen                           |
-| `JWT_SECRET`   | secret dev (dengan warning) | **Wajib diganti**, minimal 32 karakter |
-| `JWT_TTL`      | `24h`                    | Masa berlaku access token               |
-| `CORS_ORIGINS` | `http://localhost:5173,...` | Origin frontend, pisahkan koma       |
-| `STORE_PATH`   | `data/users.json`        | File penyimpanan user (dev)             |
+| Perintah        | Deskripsi                                  |
+| --------------- | ------------------------------------------ |
+| `make install`  | Install dependency backend dan frontend    |
+| `make dev`      | Jalankan backend dan frontend              |
+| `make backend`  | Jalankan backend saja                      |
+| `make frontend` | Jalankan frontend saja                     |
+| `make db-up`    | Jalankan PostgreSQL                        |
+| `make db-down`  | Hentikan PostgreSQL                        |
+| `make db-reset` | Hapus volume lalu jalankan ulang database  |
 
-Frontend memakai `VITE_API_URL` (opsional). Saat development biarkan kosong karena
-Vite mem-proxy `/api` ke `http://localhost:8080`.
+Verifikasi build:
+
+```bash
+cd backend && go build ./... && go vet ./...
+cd frontend && npm run build
+```
 
 ---
 
-## Catatan keamanan & production
+## Keamanan
 
-- Password di-hash bcrypt; hash tidak pernah dikirim ke client.
-- Login memakai pesan generik agar tidak membocorkan email mana yang terdaftar.
-- Token di client disimpan di `localStorage` (praktis, tetapi rentan XSS). Untuk
-  production yang lebih ketat, gunakan access token di memori + refresh token httpOnly.
-- Logout bersifat client-side karena JWT stateless. Jika butuh invalidasi token,
-  tambahkan refresh token + tabel sesi/denylist.
-- Penyimpanan user saat ini file JSON dengan lock (cukup untuk dev). Setup PostgreSQL
-  sudah tersedia di `postgres/`; untuk memakainya, implementasikan interface `user.Store`
-  lalu sambungkan `DATABASE_URL`.
-- Sebelum deploy: set `JWT_SECRET` dari secret manager, aktifkan HTTPS, batasi
-  `CORS_ORIGINS`, dan tambahkan rate limiting pada endpoint login/register.
+- Password di-hash dengan bcrypt dan tidak pernah dikirim ke client.
+- Login mengembalikan pesan generik untuk mengurangi user enumeration.
+- JWT menggunakan algoritma HS256 dengan validasi issuer, expiry, dan signing method.
+- Token disimpan di `localStorage`. Pola ini praktis, tetapi rentan jika terjadi XSS.
+- Logout bersifat client-side karena JWT stateless.
+- Logout server-side memerlukan refresh token, session table, atau denylist.
+- Sebelum deploy, gunakan HTTPS, secret dari secret manager, CORS yang ketat, dan
+  rate limiting pada endpoint autentikasi.
+- Jangan commit file `.env` atau password database.
+
+---
+
+## Dokumentasi
+
+| Dokumen                                | Isi                                      |
+| -------------------------------------- | ---------------------------------------- |
+| [backend/README.md](backend/README.md) | Arsitektur backend, konfigurasi, storage |
+| [frontend/README.md](frontend/README.md) | Struktur frontend dan penggunaan auth  |
+| [postgres/README.md](postgres/README.md) | Database, schema, dan integrasi         |
+
+---
+
+
