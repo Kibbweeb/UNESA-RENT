@@ -5,11 +5,6 @@ Root proyek dengan:
 - **Frontend**: React 19 + Vite (JavaScript)
 - **Backend**: Go (standard library `net/http`)
 - **Auth**: register + login + endpoint `me` menggunakan **JWT (HS256)** dan password **bcrypt**
-- **Database**: PostgreSQL disiapkan di `postgres/` (belum terhubung ke backend)
-
-Tampilan sengaja dibuat minimal. Kamu tinggal membuat halaman login/register sendiri,
-semua logikanya sudah tersedia lewat `useAuth()`.
-
 ---
 
 ## Struktur
@@ -53,7 +48,7 @@ semua logikanya sudah tersedia lewat `useAuth()`.
 
 ## Menjalankan
 
-Prasyarat: Go 1.26+, Node.js 20.19+ (atau 22.12+), dan Docker (opsional, untuk PostgreSQL).
+Prasyarat: Go 1.26+, Node.js 20.19+ (atau 22.12+), dan Docker .
 
 ### 1. Backend
 
@@ -94,11 +89,10 @@ make dev
 
 ---
 
-## PostgreSQL (belum terhubung)
+## PostgreSQL
 
 Setup PostgreSQL ada di folder `postgres/`, berisi Docker Compose, schema awal `users`,
-dan contoh environment. Backend saat ini **masih memakai penyimpanan JSON**, jadi database
-ini belum dipakai aplikasi.
+dan contoh environment.
 
 ```bash
 cd postgres
